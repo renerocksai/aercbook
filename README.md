@@ -42,6 +42,7 @@ ssh-docker-cr    : ~renerocksai/ssh-docker-cr@lists.sr.ht
 slides           : ~renerocksai/slides@lists.sr.ht
 bullets          : ~renerocksai/bullets@lists.sr.ht
 real-prog-querty : ~renerocksai/real-prog-querty@lists.sr.ht
+aercbook         : ~renerocksai/aercbook@lists.sr.ht
 ```
 
 Everything before a colon is a KEY. The KEYs are what gets searched on.
