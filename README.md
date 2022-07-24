@@ -1,6 +1,6 @@
 # aercbook
 
-A minimalistic address book for [the aerc mail client](https://aerc-mail.org)
+A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
 
 ## Contributing
 
