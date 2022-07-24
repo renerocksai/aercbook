@@ -3,14 +3,6 @@
 pkgs.mkShell {
   # for building
   buildInputs = with pkgs; [
-    xorg.libX11 
-    xorg.libX11.dev
-    xorg.libXcursor
-    xorg.libXinerama
-    xorg.xinput
-    xorg.libXrandr
-    pkgs.gtk3
-    libGL
   ];
 
   # for running tools in the shell
@@ -28,6 +20,5 @@ pkgs.mkShell {
   ]);
 
   hardeningDisable = [ "all" ];
-  LD_LIBRARY_PATH = with pkgs ; "${libGL}/lib:${xorg.libX11}/lib";
 }
 
