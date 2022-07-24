@@ -70,7 +70,6 @@ pub fn main() anyerror!void {
                     const trimmed_value = std.mem.trim(u8, value, " ");
                     try map.put(trimmed_key, trimmed_value);
                     try list.append(trimmed_key);
-                    // bug in aerc.conf: tab separated lines are NOT supported
                     // std.debug.print("   ==> {s} : {s}\n", .{ trimmed_key, trimmed_value });
                 }
             }
@@ -87,6 +86,7 @@ pub fn main() anyerror!void {
     for (list.items[0..std.math.min(5, list.items.len)]) |key| {
         const value = map.get(key);
         if (value) |v| {
+            // bug in aerc.conf: tab separated lines are NOT supported
             // std.debug.print("{s}\t{s}\n", .{ v, key });
             try std.io.getStdOut().writer().print("{s}\n", .{v});
         }
