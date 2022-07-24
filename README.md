@@ -73,7 +73,7 @@ zig build
 ```
 
 This will produce `aercbook` in the `./zig-out/bin/` directory. From there, copy
-it to a directory in your PATH, e.g. in my case `~/bin`.
+it to a directory in your PATH, e.g. in my case: `~/bin`.
 
 ## Tested with
 
