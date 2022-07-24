@@ -55,8 +55,12 @@ So you can create a shortcut XXX for aslkfjaslkdfjsadlkfslakdfj@gmail.com:
 XXX : aslkfjaslkdfjsadlkfslakdfj@gmail.com
 ```
 
-And by pressing `X` in the e-mail field, the long e-mail address will be
+And by pressing X in the e-mail field, the long e-mail address will be
 suggested as completion.
+
+**Please note:**
+
+- Everything is case-sensitive!
 
 ## Building it
 
