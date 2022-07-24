@@ -4,7 +4,8 @@ A minimalistic address book for [the aerc mail client](https://aerc-mail.org)
 
 ## Contributing
 
-There's a [mailing list](https://) to send patches to, discuss, etc.
+There's a [mailing list](https://lists.sr.ht/~renerocksai/aercbook) to send
+patches to, discuss, etc.
 
 ## Usage
 
