@@ -91,15 +91,14 @@ suggested as completion.
 
 ## Building it
 
-If you're on NixOS or use the Nix package manager, you can enter the nix shell
-and build like this:
+If you're on NixOS or use the Nix package manager, a `shell.nix` file is
+provided. It will provide you with `zig 0.9.1` and all dependencies relevant for
+building aercbook NixOS-style. Enter the shell and build aercbook like this:
 
 ```console
 nix-shell
 zig build
 ```
-
-It will provide you with `zig 0.9.1` and all relevant dependencies.
 
 All others, make sure you have [zig 0.9.1](https://ziglang.org/download/)
 installed. Then run:
