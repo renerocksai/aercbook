@@ -1,15 +1,22 @@
 # aercbook
 
 A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
+It enables fuzzy tab-completion of e-mail addresses in aerc.
 
 ## Contributing
 
 There's a [mailing list](https://lists.sr.ht/~renerocksai/aercbook) to send
-patches to, discuss, etc.
+patches to, discuss, etc. If you're used to GitHub's pull-request workflow,
+[check out this page](https://man.sr.ht/~renerocksai/migrate-to-sourcehut/PR.md)
+to see how to send me pull-requests or maybe even better-suited alternatives
+(patch-sets).
 
 ## Usage
 
-After [building it](#building-it), configure aerc to use aercbook:
+After [building it](#building-it) and making sure the `aercbook` command is in
+your PATH, configure aerc to use aercbook:
+
+In your **aerc.conf**, enable the `address-book-cmd` setting as follows:
 
 ```console
 # Specifies the command to be used to tab-complete email addresses. Any
@@ -18,18 +25,38 @@ After [building it](#building-it), configure aerc to use aercbook:
 address-book-cmd=aercbook /home/rs/.config/aerc/book.txt "%s"
 ```
 
+If `aercbook` is not in your path, you may optionally specify the full path to
+aercbook like so:
+
+```console
+address-book-cmd=/home/rs/bin/aercbook /home/rs/.config/aerc/book.txt "%s"
+```
+
 The first parameter to aercbook is the path to the address book file. In my
-case, it's located where aerc's config is.
+case, it's `book.txt`, located where aerc's config is.
+
+The second parameter `"%s"` will be replaced by aerc with what the user has
+typed so far. Do not change this.
 
 When you restart aerc now and have created an address book, aerc will
-automatically show you completion options in e-mail form fields.
+automatically show you completion options in e-mail form fields. Use the
+<kbd>TAB</kbd> key to browse through the suggestions or keep typing to narrow
+them down.
 
-The way the search works, is: it searches by the KEYs -> but returns the
-associated values.
+The way the search works, is: it searches the KEYs (think: aliases, shortcuts)
+but returns the associated e-mails.
+
+The Levenshtein's or edit distance is used to sort matching keys in order to
+enable fuzzy searching. Hence, you don't need to type in keys exactly as
+specified in the address book. E.g. instead of `rene`, you can type `ee` which
+will rank `rene` higher than e.g. `ellipsis`, eventhough the latter starts with
+an `e`.
+
+See below for what I mean with keys:
 
 ## Address Book Format
 
-Here is an [example](./book.txt):
+Here is an [example](./book.txt) of mainly my mailing list aliases:
 
 ```console
 rene             :  rene@renerocks.ai
@@ -64,23 +91,29 @@ suggested as completion.
 
 ## Building it
 
-If you're a NixOS user, you can enter the nix shell:
+If you're on NixOS or use the Nix package manager, you can enter the nix shell
+and build like this:
 
 ```console
 nix-shell
 zig build
 ```
 
-All others, make sure you have zig installed. Then run:
+It will provide you with `zig 0.9.1` and all relevant dependencies.
+
+All others, make sure you have [zig 0.9.1](https://ziglang.org/download/)
+installed. Then run:
 
 ```console
 zig build
 ```
 
-This will produce `aercbook` in the `./zig-out/bin/` directory. From there, copy
-it to a directory in your PATH, e.g. in my case: `~/bin`.
+This will produce `aercbook` in the `./zig-out/bin/` directory. From there,
+**copy it to a directory in your PATH**, e.g. in my case: `~/bin`.
 
 ## Tested with
 
 - zig 0.9.1
 - aerc 0.11.0
+- on Linux: NixOS 22.05 ([patched for aerc 0.11.0 instead of
+  0.10.0](https://sr.ht/~renerocksai/nixpkgs/))
