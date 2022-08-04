@@ -66,7 +66,7 @@ See below for what I mean with keys:
 Here is an [example](./book.txt) of mainly my mailing list aliases:
 
 ```console
-rene             :  rene@renerocks.ai
+rene             :  Rene Schallner <rene@renerocks.ai>
 come             : ~renerocksai/come-to-sourcehut@lists.sr.ht
 gh-to-sh         : ~renerocksai/GH-to-SH@lists.sr.ht
 tkdevel          : ~renerocksai/telekasten.nvim-devel@lists.sr.ht
