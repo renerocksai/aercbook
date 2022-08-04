@@ -83,7 +83,8 @@ pub fn main() anyerror!void {
             }
         }
     } else |err| {
-        std.debug.print("Error {s} : {s}", .{ err, filn });
+        const errwriter = std.io.getStdErr().writer();
+        try errwriter.print("Error {s}: {s}\n", .{ err, filn });
         return;
     }
 
