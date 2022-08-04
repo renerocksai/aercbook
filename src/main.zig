@@ -5,13 +5,13 @@ const sort = std.sort.sort;
 var input: []const u8 = undefined;
 
 fn score(input_word: []const u8, compared_to: []const u8) i32 {
-    var editdistance: i32 = @intCast(i32, edit_distance(input_word, compared_to));
+    var dist: i32 = @intCast(i32, edit_distance(input_word, compared_to));
     if (std.mem.startsWith(u8, compared_to, input_word)) {
-        // if the input matches beginning of compared_to, we decrease the distance
-        // to rank it higher at the top
-        editdistance -= @intCast(i32, input_word.len);
+        // if the input matches beginning of compared_to, we decrease the
+        // distance to rank it higher at the top
+        dist -= @intCast(i32, input_word.len);
     }
-    return editdistance;
+    return dist;
 }
 
 fn comp_levenshtein(comptime T: type) fn (void, T, T) bool {
@@ -72,7 +72,6 @@ pub fn main() anyerror!void {
         while (it.next()) |line_untrimmed| {
             index += 1;
             const line = std.mem.trimRight(u8, line_untrimmed, " \t\n");
-            // std.debug.print("Processing line {} : {s}\n", .{ index, line });
             var itt = std.mem.split(u8, line, ":");
             if (itt.next()) |key| {
                 if (itt.next()) |value| {
@@ -80,22 +79,43 @@ pub fn main() anyerror!void {
                     const trimmed_value = std.mem.trim(u8, value, " ");
                     try map.put(trimmed_key, trimmed_value);
                     try list.append(trimmed_key);
-                    // std.debug.print("   ==> {s} : {s}\n", .{ trimmed_key, trimmed_value });
                 }
             }
         }
     } else |err| {
-        std.debug.print("{s} : {s}", .{ err, filn });
+        std.debug.print("Error {s} : {s}", .{ err, filn });
         return;
     }
 
     //
     // search
     //
+    if (input[0] == '*') {
+        // we output everything
+        var it = map.valueIterator();
+        while (it.next()) |value| {
+            try std.io.getStdOut().writer().print("{s}\n", .{value.*});
+        }
+        return;
+    }
+
+    if (std.mem.indexOf(u8, input, "*")) |index| {
+        // search for keys starting with input
+        sort([]const u8, list.items, {}, comptime comp_levenshtein([]const u8));
+        for (list.items) |key| {
+            if (std.mem.startsWith(u8, key, input[0..index])) {
+                if (map.get(key)) |v| {
+                    try std.io.getStdOut().writer().print("{s}\n", .{v});
+                }
+            }
+        }
+        return;
+    }
+
+    // default: levenshtein search
     sort([]const u8, list.items, {}, comptime comp_levenshtein([]const u8));
     for (list.items[0..std.math.min(5, list.items.len)]) |key| {
-        const value = map.get(key);
-        if (value) |v| {
+        if (map.get(key)) |v| {
             // bug in aerc.conf: tab separated lines are NOT supported
             // std.debug.print("{s}\t{s}\n", .{ v, key });
             try std.io.getStdOut().writer().print("{s}\n", .{v});

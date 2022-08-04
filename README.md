@@ -3,7 +3,7 @@
 A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
 It enables fuzzy tab-completion of e-mail addresses in aerc.
 
-## Contributing
+# Contributing
 
 There's a [mailing list](https://lists.sr.ht/~renerocksai/aercbook) to send
 patches to, discuss, etc. If you're used to GitHub's pull-request workflow,
@@ -11,7 +11,7 @@ patches to, discuss, etc. If you're used to GitHub's pull-request workflow,
 to see how to send me pull-requests or maybe even better-suited alternatives
 (patch-sets).
 
-## Usage
+# Usage
 
 After [building it](#building-it) and making sure the `aercbook` command is in
 your PATH, configure aerc to use aercbook:
@@ -46,6 +46,23 @@ them down.
 The way the search works, is: it searches the KEYs (think: aliases, shortcuts)
 but returns the associated e-mails.
 
+See [address book format](#address-book-format) for what I mean with keys.
+
+# Search Modes
+
+## * : Dump Address Book
+
+Type `*` as the **first** character of the search. This will list the entire
+address book as suggestions to tab through.
+
+## xx* : Dump entries starting with xx
+
+Type the beginning of a KEY, followed by an asterisk, and only address book
+entries whose keys **start with** the term before the asterisk will be listed.
+E.g. `r*` will list all entries with keys that start with an `r`.
+
+## Default: Fuzzy search
+
 A modified Levenshtein's or edit distance is used to sort matching keys in order
 to enable fuzzy searching. Hence, you don't need to type in keys exactly as
 specified in the address book. E.g. instead of `rene`, you can type `ee` which
@@ -56,12 +73,10 @@ The modification to the Levenshtein distance is: search words matching the
 beginning of keys will be preferred by subtracting their length from the
 resulting distance. E.g. "ren" will have an edit distance to the key "rene" of
 1, but since the first three characters match the key, the resulting distance is
--2, giving "ren" preference over matches with edit distance of 1 that don't
-start with "ren".
+1-3 = -2, giving "ren" preference over matches with an edit distance of 1 that
+don't start with "ren".
 
-See below for what I mean with keys:
-
-## Address Book Format
+# Address Book Format
 
 Here is an [example](./book.txt) of mainly my mailing list aliases:
 
@@ -96,7 +111,7 @@ suggested as completion.
 
 - Everything is case-sensitive!
 
-## Building it
+# Building it
 
 If you're on NixOS or use the Nix package manager, a `shell.nix` file is
 provided. It will provide you with `zig 0.9.1` and all dependencies relevant for
@@ -117,7 +132,7 @@ zig build
 This will produce `aercbook` in the `./zig-out/bin/` directory. From there,
 **copy it to a directory in your PATH**, e.g. in my case: `~/bin`.
 
-## Tested with
+# Tested with
 
 - zig 0.9.1
 - aerc 0.11.0
