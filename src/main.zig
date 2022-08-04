@@ -4,12 +4,22 @@ const sort = std.sort.sort;
 
 var input: []const u8 = undefined;
 
-pub fn comp_levenshtein(comptime T: type) fn (void, T, T) bool {
+fn score(input_word: []const u8, compared_to: []const u8) i32 {
+    var editdistance: i32 = @intCast(i32, edit_distance(input_word, compared_to));
+    if (std.mem.startsWith(u8, compared_to, input_word)) {
+        // if the input matches beginning of compared_to, we decrease the distance
+        // to rank it higher at the top
+        editdistance -= @intCast(i32, input_word.len);
+    }
+    return editdistance;
+}
+
+fn comp_levenshtein(comptime T: type) fn (void, T, T) bool {
     const impl = struct {
         fn inner(context: void, a: T, b: T) bool {
             _ = context;
-            const distance_a = edit_distance(input, a);
-            const distance_b = edit_distance(input, b);
+            const distance_a = score(input, a);
+            const distance_b = score(input, b);
             return distance_a < distance_b;
         }
     };

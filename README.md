@@ -46,11 +46,18 @@ them down.
 The way the search works, is: it searches the KEYs (think: aliases, shortcuts)
 but returns the associated e-mails.
 
-The Levenshtein's or edit distance is used to sort matching keys in order to
-enable fuzzy searching. Hence, you don't need to type in keys exactly as
+A modified Levenshtein's or edit distance is used to sort matching keys in order
+to enable fuzzy searching. Hence, you don't need to type in keys exactly as
 specified in the address book. E.g. instead of `rene`, you can type `ee` which
 will rank `rene` higher than e.g. `ellipsis`, eventhough the latter starts with
 an `e`.
+
+The modification to the Levenshtein distance is: search words matching the
+beginning of keys will be preferred by subtracting their length from the
+resulting distance. E.g. "ren" will have an edit distance to the key "rene" of
+1, but since the first three characters match the key, the resulting distance is
+-2, giving "ren" preference over matches with edit distance of 1 that don't
+start with "ren".
 
 See below for what I mean with keys:
 
