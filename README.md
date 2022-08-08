@@ -1,4 +1,4 @@
-![](./aercbook-pro.png)
+![](./aercbook.png)
 
 # aercbook
 
