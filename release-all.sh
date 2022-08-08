@@ -19,9 +19,14 @@ function build {
     rm -f zig-out/bin/aercbook.exe
     zig build -Dtarget=$target -D$mode
     if [ -f zig-out/bin/aercbook ] ; then
-        mv zig-out/bin/aercbook $RELEASE_DIR/aercbook-$(getversion)--$target
+        filn=$RELEASE_DIR/aercbook-$(getversion)--$target
+        mv zig-out/bin/aercbook $filn
+        gzip -f $filn
     else
-        mv zig-out/bin/aercbook.exe $RELEASE_DIR/aercbook-$(getversion)--$target.exe
+        filn=$RELEASE_DIR/aercbook-$(getversion)--$target.exe
+        mv zig-out/bin/aercbook.exe $filn
+        zip -9 $filn.zip $filn
+        rm -f $filn
     fi
     echo ""
 }

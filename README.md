@@ -11,10 +11,32 @@ patches to, discuss, etc. If you're used to GitHub's pull-request workflow,
 to see how to send me pull-requests or maybe even better-suited alternatives
 (patch-sets).
 
+# Getting it
+
+You can download aercbook from its [refs
+page](https://git.sr.ht/~renerocksai/aercbook/refs). Pick the latest version,
+e.g. `v0.1.0`, then download the executable for your operating system.
+
+Binary downloads are named with the following postfixes:
+
+- `--aarch64-macos.gz` : for macOS ARM (e.g. M1)
+- `--aarch64-x86_64-linux.gz` : for Linux
+- `--aarch64-x86_64-macos.gz` : for Intel Macs
+- `--aarch64-x86_64-windows.exe.zip` : for Windows
+
+After downloading, extract the `.gz` files like this:
+
+```console
+gunzip aercbook-v0.1.0--x86_64-linux.gz
+```
+
+On Windows, right-click on the `.zip` file and choose "Extract all..." from the
+context menu.
+
 # Usage
 
-After [building it](#building-it) and making sure the `aercbook` command is in
-your PATH, configure aerc to use aercbook:
+After [downloading](#getting-it) or [building it](#building-it), and making sure
+the `aercbook` command is in your PATH, configure aerc to use aercbook:
 
 In your **aerc.conf**, enable the `address-book-cmd` setting as follows:
 
