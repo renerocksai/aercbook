@@ -5,17 +5,19 @@ pub fn build(b: *std.build.Builder) void {
     // write src/version.zig
     const alloc = std.heap.page_allocator;
     const gvs = gitVersionTag(alloc);
+    const efmt = "WARNING: could not write src/version.zig:\n   {s}\n";
     if (std.fs.cwd().createFile("src/version.zig", .{})) |file| {
         defer file.close();
-        if (std.fmt.allocPrint(alloc, "pub const version_string = \"{s}\";", .{gvs})) |strline| {
-            if (file.writeAll(strline)) {} else |err| {
-                std.io.getStdErr().writer().print("WARNING: could not write src/version.zig:\n   {s}\n", .{err}) catch unreachable;
+        const zigfmt = "pub const version_string = \"{s}\";";
+        if (std.fmt.allocPrint(alloc, zigfmt, .{gvs})) |strline| {
+            if (file.writeAll(strline)) {} else |e| {
+                std.io.getStdErr().writer().print(efmt, .{e}) catch unreachable;
             }
         } else |err| {
-            std.io.getStdErr().writer().print("WARNING: could not write src/version.zig\n   {s}\n", .{err}) catch unreachable;
+            std.io.getStdErr().writer().print(efmt, .{err}) catch unreachable;
         }
     } else |err| {
-        std.io.getStdErr().writer().print("WARNING: could not create src/version.zig:\n   {s}\n", .{err}) catch unreachable;
+        std.io.getStdErr().writer().print(efmt, .{err}) catch unreachable;
     }
 
     // Standard target options allows the person running `zig build` to choose
