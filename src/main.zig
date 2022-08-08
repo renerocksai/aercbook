@@ -1,6 +1,7 @@
 const std = @import("std");
 const edit_distance = @import("levenshtein.zig").edit_distance;
 const sort = std.sort.sort;
+const version_string = @import("version.zig").version_string;
 
 var input: []const u8 = undefined;
 
@@ -27,6 +28,7 @@ fn comp_levenshtein(comptime T: type) fn (void, T, T) bool {
 }
 
 fn help(exe: []const u8) void {
+    std.debug.print("aercbook {s}\n", .{version_string});
     std.debug.print("Usage: {s} inputfile search-term\n", .{exe});
 }
 
