@@ -3,6 +3,8 @@
 A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
 It enables fuzzy tab-completion of e-mail addresses in aerc.
 
+![](./aercbook-pro.png)
+
 # Contributing
 
 There's a [mailing list](https://lists.sr.ht/~renerocksai/aercbook) to send
