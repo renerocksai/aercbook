@@ -30,8 +30,12 @@ After downloading, extract the `.gz` files like this:
 gunzip aercbook-v0.1.0--x86_64-linux.gz
 ```
 
+**Note:** You might want to rename the executable to `aercbook` (without the
+version and platform information), or create an `aercbook` symlink for it.
+
 On Windows, right-click on the `.zip` file and choose "Extract all..." from the
-context menu.
+context menu. After that, you may want to right-click and rename the extracted
+file to `aerckook.exe`.
 
 # Usage
 
