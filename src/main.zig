@@ -47,6 +47,39 @@ fn help(exe: []const u8) void {
     , .{});
 }
 
+fn readAddressBook(alloc: std.mem.Allocator, filn: []const u8, max_fs: usize, keylist: *std.ArrayList([]const u8), kvmap: *std.StringHashMap([]const u8)) !void {
+    var file = try std.fs.cwd().openFile(filn, .{});
+    defer file.close();
+    const buffer = try file.readToEndAlloc(alloc, max_fs);
+    var it = std.mem.split(u8, buffer, "\n");
+    var index: usize = 0;
+    while (it.next()) |line_untrimmed| {
+        index += 1;
+        const line = std.mem.trimRight(u8, line_untrimmed, " \t\n");
+        var itt = std.mem.split(u8, line, ":");
+        var trimmed_key: []const u8 = undefined;
+        var trimmed_value: []const u8 = undefined;
+        if (itt.next()) |k| {
+            trimmed_key = std.mem.trim(u8, k, " ");
+            if (trimmed_key.len == 0) continue;
+            if (itt.next()) |value| {
+                trimmed_value = std.mem.trim(u8, value, " ");
+            } else {
+                trimmed_value = trimmed_key;
+            }
+            try kvmap.put(trimmed_key, trimmed_value);
+            try keylist.append(trimmed_key);
+        }
+    }
+}
+
+fn addToAddressBook(filn: []const u8, key: []const u8, value: []const u8) !void {
+    var file = try std.fs.cwd().openFile(filn, .{ .write = true });
+    defer file.close();
+    try file.seekFromEnd(0);
+    try file.writer().print("\n{s} : {s}", .{ key, value });
+}
+
 pub fn main() anyerror!void {
     const alloc = std.heap.page_allocator;
 
@@ -70,7 +103,6 @@ pub fn main() anyerror!void {
         defer options.deinit();
 
         const o = options.options;
-
         const prog_name = options.executable_name orelse "aercbook";
 
         var filn: []const u8 = undefined;
@@ -90,7 +122,9 @@ pub fn main() anyerror!void {
         var map = std.StringHashMap([]const u8).init(alloc);
         defer map.deinit();
 
+        //
         // basic add-mode
+        //
         if (o.add) {
             // we need an addr-book
             if (options.positionals.len < 2) {
@@ -106,34 +140,23 @@ pub fn main() anyerror!void {
                 value = key;
             }
 
-            var file = try std.fs.cwd().openFile(filn, .{ .write = true });
-            defer file.close();
-            const buffer = try file.readToEndAlloc(alloc, max_file_size);
-            var it = std.mem.split(u8, buffer, "\n");
-            var index: usize = 0;
-            while (it.next()) |line_untrimmed| {
-                index += 1;
-                const line = std.mem.trimRight(u8, line_untrimmed, " \t\n");
-                var itt = std.mem.split(u8, line, ":");
-                var trimmed_key: []const u8 = undefined;
-                var trimmed_value: []const u8 = undefined;
-                if (itt.next()) |k| {
-                    trimmed_key = std.mem.trim(u8, k, " ");
-                    if (trimmed_key.len == 0) continue;
-                    try map.put(trimmed_key, trimmed_value);
-                    try list.append(trimmed_key);
-                }
+            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
+                const errwriter = std.io.getStdErr().writer();
+                try errwriter.print("Error {s}: {s}\n", .{ err, filn });
+                return;
             }
             // check if key exists
             if (map.contains(key)) {
                 std.debug.print("key exists: `{s}`\n", .{key});
                 return;
             }
-            try file.seekFromEnd(0);
-            try file.writer().print("\n{s} : {s}", .{ key, value });
+            try addToAddressBook(filn, key, value);
             return;
         }
 
+        //
+        // search mode
+        //
         if (options.positionals.len < 2) {
             help(options.executable_name orelse "aercbook");
             return;
@@ -148,30 +171,7 @@ pub fn main() anyerror!void {
         // parse input file
         //
 
-        if (std.fs.cwd().openFile(filn, .{ .read = true })) |f| {
-            defer f.close();
-            const buffer = try f.readToEndAlloc(alloc, max_file_size);
-            var it = std.mem.split(u8, buffer, "\n");
-            var index: usize = 0;
-            while (it.next()) |line_untrimmed| {
-                index += 1;
-                const line = std.mem.trimRight(u8, line_untrimmed, " \t\n");
-                var itt = std.mem.split(u8, line, ":");
-                var trimmed_key: []const u8 = undefined;
-                var trimmed_value: []const u8 = undefined;
-                if (itt.next()) |key| {
-                    trimmed_key = std.mem.trim(u8, key, " ");
-                    if (trimmed_key.len == 0) continue;
-                    if (itt.next()) |value| {
-                        trimmed_value = std.mem.trim(u8, value, " ");
-                    } else {
-                        trimmed_value = trimmed_key;
-                    }
-                    try map.put(trimmed_key, trimmed_value);
-                    try list.append(trimmed_key);
-                }
-            }
-        } else |err| {
+        if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
             const errwriter = std.io.getStdErr().writer();
             try errwriter.print("Error {s}: {s}\n", .{ err, filn });
             return;
