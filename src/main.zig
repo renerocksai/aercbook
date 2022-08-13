@@ -75,13 +75,18 @@ pub fn main() anyerror!void {
             index += 1;
             const line = std.mem.trimRight(u8, line_untrimmed, " \t\n");
             var itt = std.mem.split(u8, line, ":");
+            var trimmed_key: []const u8 = undefined;
+            var trimmed_value: []const u8 = undefined;
             if (itt.next()) |key| {
+                trimmed_key = std.mem.trim(u8, key, " ");
+                if (trimmed_key.len == 0) continue;
                 if (itt.next()) |value| {
-                    const trimmed_key = std.mem.trim(u8, key, " ");
-                    const trimmed_value = std.mem.trim(u8, value, " ");
-                    try map.put(trimmed_key, trimmed_value);
-                    try list.append(trimmed_key);
+                    trimmed_value = std.mem.trim(u8, value, " ");
+                } else {
+                    trimmed_value = trimmed_key;
                 }
+                try map.put(trimmed_key, trimmed_value);
+                try list.append(trimmed_key);
             }
         }
     } else |err| {
