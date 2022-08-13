@@ -104,6 +104,23 @@ resulting distance. E.g. "ren" will have an edit distance to the key "rene" of
 1-3 = -2, giving "ren" preference over matches with an edit distance of 1 that
 don't start with "ren".
 
+# Adding to the address book
+
+Aercbook supports adding to the address book from the command line:
+
+```console
+aercbook book.txt -a key [email]
+
+# examples
+aercbook book.txt -a rene rene@renerocksai
+aercbook book.txt -a rene '"Rene Schallner" <rene@renerocks.ai>'
+aercbook book.txt -a 'Rene Schallner' '"Rene Schallner" <rene@renerocks.ai>'
+
+# if email is omitted, key becomes email
+# example: add a single e-mail address
+aercbook -a me@domain.org
+```
+
 # Address Book Format
 
 Here is an [example](./book.txt) of mainly my mailing list aliases:
@@ -120,11 +137,16 @@ slides           : ~renerocksai/slides@lists.sr.ht
 bullets          : ~renerocksai/bullets@lists.sr.ht
 real-prog-querty : ~renerocksai/real-prog-querty@lists.sr.ht
 aercbook         : ~renerocksai/aercbook@lists.sr.ht
+
+someone@mail.org
 ```
 
-Everything before a colon is a KEY. The KEYs are what gets searched on.
-Everything after a colon is the associated e-mail address that will be shown in
-the completion list.
+- Everything before a colon is a KEY.
+- single-item lines are KEYs and values (e-mail addresses to show) at the same
+  time
+
+The KEYs are what gets searched on. Everything after a colon is the associated
+e-mail address that will be shown in the completion list.
 
 So you can create a shortcut XXX for aslkfjaslkdfjsadlkfslakdfj@gmail.com:
 
@@ -141,17 +163,8 @@ suggested as completion.
 
 # Building it
 
-If you're on NixOS or use the Nix package manager, a `shell.nix` file is
-provided. It will provide you with `zig 0.9.1` and all dependencies relevant for
-building aercbook NixOS-style. Enter the shell and build aercbook like this:
-
-```console
-nix-shell
-zig build
-```
-
-All others, make sure you have [zig 0.9.1](https://ziglang.org/download/)
-installed. Then run:
+Make sure you have [zig 0.9.1](https://ziglang.org/download/) installed. Then
+run:
 
 ```console
 zig build
