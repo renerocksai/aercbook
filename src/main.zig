@@ -11,7 +11,7 @@ fn score(input_word: []const u8, compared_to: []const u8) i32 {
     if (std.mem.startsWith(u8, compared_to, input_word)) {
         // if the input matches beginning of compared_to, we decrease the
         // distance to rank it higher at the top
-        dist -= @intCast(i32, input_word.len);
+        dist -= @intCast(i32, input_word.len * 2);
     }
     return dist;
 }
