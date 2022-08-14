@@ -205,20 +205,17 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
 
     while (it.next()) |line| {
         // end of header section will be a single \r
-        if (line.len == 1) {}
-        if (std.mem.startsWith(u8, line, "To:")) {
+        if (line.len == 1) {
+            break;
+        }
+
+        if (std.ascii.eqlIgnoreCase(line[0..3], "to:")) {
             to_pos = it.index.? - line.len + @intCast(usize, 2);
             current_end = &to_end;
             to_end = it.index.? - 2;
             continue;
         }
-        if (std.mem.startsWith(u8, line, "CC:")) {
-            cc_pos = it.index.? - line.len + @intCast(usize, 2);
-            current_end = &cc_end;
-            cc_end = it.index.? - 2;
-            continue;
-        }
-        if (std.mem.startsWith(u8, line, "Cc:")) {
+        if (std.ascii.eqlIgnoreCase(line[0..3], "cc:")) {
             cc_pos = it.index.? - line.len + @intCast(usize, 2);
             current_end = &cc_end;
             cc_end = it.index.? - 2;
