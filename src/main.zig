@@ -28,23 +28,43 @@ fn comp_levenshtein(comptime T: type) fn (void, T, T) bool {
     return impl.inner;
 }
 
-fn help(exe: []const u8) void {
-    std.debug.print("aercbook {s}\n", .{version_string});
-    std.debug.print("Usage: {s} inputfile [search-term] | [-a key [value]]\n", .{exe});
+fn help() void {
     std.debug.print(
+        \\ aercbook {s}
         \\ Search in inputfile's keys for provided search-term.
         \\ Or add to inputfile.
         \\
-        \\ search-term may be:
-        \\     * : dump entire address book (values)
-        \\   xx* : search for keys that start with xx, dump their values
-        \\   xxx : fuzzy-search for keys that match xx, dump their values
+        \\Usage:
+        \\  Search :
+        \\    aercbook inputfile search-term
         \\
-        \\ Adding only a key will set the value identical to the key:
-        \\   -a mykey        ->  will add "mykey : mykey" to the inputfile
-        \\   -a mykey  value ->  will add "mykey : value" to the inputfile
+        \\    search-term may be:
+        \\       * : dump entire address book (values)
+        \\     xx* : search for keys that start with xx, dump their values
+        \\     xxx : fuzzy-search for keys that match xx, dump their values
         \\
-    , .{});
+        \\  Add by key and value :
+        \\    aercbook inputfile -a key [value]
+        \\
+        \\    Adding only a key will set the value identical to the key:
+        \\    -a mykey        ->  will add "mykey : mykey" to the inputfile
+        \\    -a mykey  value ->  will add "mykey : value" to the inputfile
+        \\
+        \\  Add-from e-mail :
+        \\  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
+        \\
+        \\    Parses the piped-in e-mail. Specify --add-to or --add-cc or
+        \\    both.
+        \\
+        \\    --add-to : scan the e-mail for To: emails and add them
+        \\    --add-cc : scan the e-mail for CC: emails and add them
+        \\
+        \\    Note: e-mails like `My Name <my.name@domain.org>` will be
+        \\    split into:
+        \\      key  : My Name
+        \\      value: My Name <my.name@domain.org>
+        \\
+    , .{version_string});
 }
 
 fn readAddressBook(alloc: std.mem.Allocator, filn: []const u8, max_fs: usize, keylist: *std.ArrayList([]const u8), kvmap: *std.StringHashMap([]const u8)) !void {
@@ -80,6 +100,154 @@ fn addToAddressBook(filn: []const u8, key: []const u8, value: []const u8) !void 
     try file.writer().print("\n{s} : {s}", .{ key, value });
 }
 
+fn addEmailsToAddressBook(filn: []const u8, map: std.StringHashMap([]const u8), emails: std.StringHashMap([]const u8)) !void {
+    var file = try std.fs.cwd().openFile(filn, .{ .write = true });
+    defer file.close();
+    try file.seekFromEnd(0);
+    var it = emails.iterator();
+    while (it.next()) |item| {
+        if (map.contains(item.key_ptr.*)) {
+            std.debug.print("key exists: `{s}`\n", .{item.key_ptr.*});
+            continue;
+        }
+        try file.writer().print("\n{s} : {s}", .{ item.key_ptr.*, item.value_ptr.* });
+        std.debug.print("Added {s} -> {s}\n", .{ item.key_ptr.*, item.value_ptr.* });
+    }
+}
+
+const ParseMailResult = struct {
+    to: std.StringHashMap([]const u8),
+    cc: std.StringHashMap([]const u8),
+    const Self = @This();
+    fn init(a: std.mem.Allocator) !Self {
+        return Self{
+            .to = std.StringHashMap([]const u8).init(a),
+            .cc = std.StringHashMap([]const u8).init(a),
+        };
+    }
+};
+
+const EmailSplitResult = struct {
+    name: []const u8,
+    email: []const u8,
+    all: []const u8,
+};
+
+fn splitEmailSplitResult(email: []const u8) EmailSplitResult {
+    var ret = EmailSplitResult{ .name = email, .email = email, .all = email };
+
+    var ltindex: usize = 0;
+    if (std.mem.lastIndexOf(u8, email, "<")) |indexofLessthan| {
+        ltindex = indexofLessthan;
+        if (std.mem.lastIndexOf(u8, email, "\"")) |indexofQuote| {
+            if (indexofQuote > indexofLessthan) {
+                // < is within quotes, ignore
+                ltindex = 0;
+            }
+        }
+    }
+
+    // if the email starts with <, there would be nothing as a key
+    // before the <, so only split if pos of < is > 1, like in
+    // `x <x@y.com`
+    if (ltindex > 1) {
+        ret.name = std.mem.trim(u8, email[0 .. ltindex - 1], " ");
+        ret.email = email[ltindex..email.len];
+    }
+    return ret;
+}
+
+fn parseAddresses(a: std.mem.Allocator, buf: []u8, map: *std.StringHashMap([]const u8)) !void {
+    // first, split by comma
+    var it = std.mem.split(u8, buf, ",");
+    while (it.next()) |addr| {
+        // split into parts separated by whitespace
+        var t_it = std.mem.tokenize(u8, addr, " \t\n\r");
+        var parts = std.ArrayList([]const u8).init(a);
+        while (t_it.next()) |part| {
+            try parts.append(part);
+        }
+        // join back again into nice email address without excessive
+        // whitespace
+        const email = try std.mem.join(a, " ", parts.items);
+
+        // we figure out how to best split off a key
+        const split = splitEmailSplitResult(email);
+
+        try map.put(split.name, split.all);
+    }
+}
+
+const ParseMailError = error{
+    ReadError,
+};
+
+fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
+    const stdin = std.io.getStdIn();
+
+    // read the 1st megabyte - we're interested in the header only
+    const buffer = try alloc.alloc(u8, 1024 * 1024);
+
+    const howmany = try stdin.reader().read(buffer);
+    if (howmany <= 0) return error.ReadError;
+
+    var ret = try ParseMailResult.init(alloc);
+
+    // we don't tokenize, so we get \r for empty line
+    var it = std.mem.split(u8, buffer, "\n");
+
+    // first collect the headers
+    var to_pos: usize = 0;
+    var to_end: usize = 0;
+    var cc_pos: usize = 0;
+    var cc_end: usize = 0;
+    var current_end: ?*usize = null;
+
+    while (it.next()) |line| {
+        // end of header section will be a single \r
+        if (line.len == 1) {}
+        if (std.mem.startsWith(u8, line, "To:")) {
+            to_pos = it.index.? - line.len + @intCast(usize, 2);
+            current_end = &to_end;
+            to_end = it.index.? - 2;
+            continue;
+        }
+        if (std.mem.startsWith(u8, line, "CC:")) {
+            cc_pos = it.index.? - line.len + @intCast(usize, 2);
+            current_end = &cc_end;
+            cc_end = it.index.? - 2;
+            continue;
+        }
+        if (std.mem.startsWith(u8, line, "Cc:")) {
+            cc_pos = it.index.? - line.len + @intCast(usize, 2);
+            current_end = &cc_end;
+            cc_end = it.index.? - 2;
+            continue;
+        }
+
+        if (std.mem.startsWith(u8, line, "\t")) {
+            // std.debug.print("continuation\n", .{});
+            if (current_end != null) {
+                current_end.?.* = it.index.? - 2;
+            }
+        } else {
+            current_end = null;
+        }
+    }
+
+    if (to_pos != 0 and to_end != 0) {
+        // std.debug.print("->to: `{s}`\n", .{buffer[to_pos..to_end]});
+        try parseAddresses(alloc, buffer[to_pos..to_end], &ret.to);
+    }
+
+    if (cc_pos != 0 and cc_end != 0) {
+        // std.debug.print("->cc: `{s}`\n", .{buffer[cc_pos..cc_end]});
+        try parseAddresses(alloc, buffer[cc_pos..cc_end], &ret.cc);
+    }
+
+    return ret;
+}
+
 pub fn main() anyerror!void {
     const alloc = std.heap.page_allocator;
 
@@ -89,11 +257,13 @@ pub fn main() anyerror!void {
 
     if (argsParser.parseForCurrentProcess(struct {
         // This declares long options for double hyphen
-        // @"add-from": bool = false,
-        // @"add-cc": bool = false,
-        // @"add-to": bool = false,
+        @"add-cc": bool = false,
+        @"add-to": bool = false,
+        @"add-all": bool = false,
         add: bool = false,
         help: bool = false,
+        parse: bool = false,
+        interactive: bool = false,
 
         // This declares short-hand options for single hyphen
         pub const shorthands = .{
@@ -103,15 +273,14 @@ pub fn main() anyerror!void {
         defer options.deinit();
 
         const o = options.options;
-        const prog_name = options.executable_name orelse "aercbook";
 
         var filn: []const u8 = undefined;
         var search: []const u8 = undefined;
-        const add_mode: bool = o.add; // o.@"add-from" or o.@"add-cc" or o.@"add-to" or o.add != null;
+        const add_mode: bool = o.add or o.parse or o.@"add-to" or o.@"add-cc" or o.@"add-all";
 
         // no args at all or --help
         if (o.help or (options.positionals.len == 0 and !add_mode)) {
-            help(prog_name);
+            help();
             return;
         }
 
@@ -122,16 +291,40 @@ pub fn main() anyerror!void {
         var map = std.StringHashMap([]const u8).init(alloc);
         defer map.deinit();
 
+        filn = options.positionals[0];
+
+        //
+        // parse email -> add mode
+        //
+        if (o.parse) {
+            if (!o.@"add-to" and !o.@"add-cc") {
+                help();
+                return;
+            }
+            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
+                const errwriter = std.io.getStdErr().writer();
+                try errwriter.print("Error {s}: {s}\n", .{ err, filn });
+                return;
+            }
+            const ret = try parseMailFromStdin(alloc);
+            if (o.@"add-all" or o.@"add-to") {
+                try addEmailsToAddressBook(filn, map, ret.to);
+            }
+            if (o.@"add-all" or o.@"add-cc") {
+                try addEmailsToAddressBook(filn, map, ret.cc);
+            }
+            return;
+        }
+
         //
         // basic add-mode
         //
         if (o.add) {
             // we need an addr-book
             if (options.positionals.len < 2) {
-                help(prog_name);
+                help();
                 return;
             }
-            filn = options.positionals[0];
             var key: []const u8 = options.positionals[1];
             var value: []const u8 = undefined;
             if (options.positionals.len >= 3) {
@@ -158,11 +351,10 @@ pub fn main() anyerror!void {
         // search mode
         //
         if (options.positionals.len < 2) {
-            help(options.executable_name orelse "aercbook");
+            help();
             return;
         }
 
-        filn = options.positionals[0];
         search = options.positionals[1];
 
         input = search;
@@ -213,6 +405,6 @@ pub fn main() anyerror!void {
         }
     } else |err| {
         std.debug.print("{s}", .{err});
-        help("aercbook");
+        help();
     }
 }

@@ -5,6 +5,49 @@
 A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
 It enables fuzzy tab-completion of e-mail addresses in aerc.
 
+- fuzz-search in address book for tab-completion, with wildcard support
+- add to address book from the command line
+- parse e-mail headers and add To: and CC: addresses to address book
+
+What you get:
+
+```console
+aercbook --help
+ aercbook v0.1.1
+ Search in inputfile's keys for provided search-term.
+ Or add to inputfile.
+
+Usage:
+  Search :
+    aercbook inputfile search-term
+
+    search-term may be:
+       * : dump entire address book (values)
+     xx* : search for keys that start with xx, dump their values
+     xxx : fuzzy-search for keys that match xx, dump their values
+
+  Add by key and value :
+    aercbook inputfile -a key [value]
+
+    Adding only a key will set the value identical to the key:
+    -a mykey        ->  will add "mykey : mykey" to the inputfile
+    -a mykey  value ->  will add "mykey : value" to the inputfile
+
+  Add-from e-mail :
+  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
+
+    Parses the piped-in e-mail. Specify --add-to or --add-cc or
+    both.
+
+    --add-to : scan the e-mail for To: emails and add them
+    --add-cc : scan the e-mail for CC: emails and add them
+
+    Note: e-mails like `My Name <my.name@domain.org>` will be
+    split into:
+      key  : My Name
+      value: My Name <my.name@domain.org>
+```
+
 # Contributing
 
 There's a [mailing list](https://lists.sr.ht/~renerocksai/aercbook) to send
@@ -17,7 +60,7 @@ to see how to send me pull-requests or maybe even better-suited alternatives
 
 You can download aercbook from its [refs
 page](https://git.sr.ht/~renerocksai/aercbook/refs). Pick the latest version,
-e.g. `v0.1.0`, then download the executable for your operating system.
+e.g. `v0.1.1`, then download the executable for your operating system.
 
 Binary downloads are named with the following postfixes:
 
@@ -29,7 +72,7 @@ Binary downloads are named with the following postfixes:
 After downloading, extract the `.gz` files like this:
 
 ```console
-gunzip aercbook-v0.1.0--x86_64-linux.gz
+gunzip aercbook-v0.1.1--x86_64-linux.gz
 ```
 
 **Note:** You might want to rename the executable to `aercbook` (without the
@@ -106,6 +149,8 @@ don't start with "ren".
 
 # Adding to the address book
 
+## From the command line
+
 Aercbook supports adding to the address book from the command line:
 
 ```console
@@ -119,6 +164,49 @@ aercbook book.txt -a 'Rene Schallner' '"Rene Schallner" <rene@renerocks.ai>'
 # if email is omitted, key becomes email
 # example: add a single e-mail address
 aercbook -a me@domain.org
+```
+
+## From a piped-in e-mail
+
+You can pipe entire e-mails from aerc to aercbook, and let aercbook parse the
+headers for to- and cc- addresses, then add them to the address book.
+
+From `aercbook --help`:
+
+```
+  Add-from e-mail :
+  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
+
+    Parses the piped-in e-mail. Specify --add-to or --add-cc or
+    both.
+
+    --add-to : scan the e-mail for To: emails and add them
+    --add-cc : scan the e-mail for CC: emails and add them
+
+    Note: e-mails like `My Name <my.name@domain.org>` will be
+    split into:
+      key  : My Name
+      value: My Name <my.name@domain.org>
+```
+
+So you can configure a **binds.conf** entry like this:
+
+```
+[view]
+
+# ... existing stuff ...
+
+# on `aa` (add all), add all to- and cc- addresses to the address book
+aa = :pipe -m aercbook /home/rs/.config/aerc/book.txt --parse --add-to --add-cc<Enter>
+```
+
+If you're not interested in the output of the adding, e.g. which e-mails have
+been added, which ignored (key exists), then you can silence it by adding the
+`-b` parameter to the `pipe` command:
+
+```
+# on `aa` (add all), add all to- and cc- addresses to the address book
+aa = :pipe -m -b aercbook /home/rs/.config/aerc/book.txt --parse --add-to --add-cc<Enter>
 ```
 
 # Address Book Format
