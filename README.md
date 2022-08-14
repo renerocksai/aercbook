@@ -5,7 +5,7 @@
 A minimalistic address book for [the aerc e-mail client](https://aerc-mail.org).
 It enables fuzzy tab-completion of e-mail addresses in aerc.
 
-- fuzz-search in address book for tab-completion, with wildcard support
+- fuzzy-search in address book for tab-completion, with wildcard support
 - add to address book from the command line
 - parse e-mail headers and add To: and CC: addresses to address book
 
