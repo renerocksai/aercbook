@@ -67,7 +67,13 @@ fn help() void {
     , .{version_string});
 }
 
-fn readAddressBook(alloc: std.mem.Allocator, filn: []const u8, max_fs: usize, keylist: *std.ArrayList([]const u8), kvmap: *std.StringHashMap([]const u8)) !void {
+fn readAddressBook(
+    alloc: std.mem.Allocator,
+    filn: []const u8,
+    max_fs: usize,
+    keylist: *std.ArrayList([]const u8),
+    kvmap: *std.StringHashMap([]const u8),
+) !void {
     var file = try std.fs.cwd().openFile(filn, .{});
     defer file.close();
     const buffer = try file.readToEndAlloc(alloc, max_fs);
@@ -93,14 +99,22 @@ fn readAddressBook(alloc: std.mem.Allocator, filn: []const u8, max_fs: usize, ke
     }
 }
 
-fn addToAddressBook(filn: []const u8, key: []const u8, value: []const u8) !void {
+fn addToAddressBook(
+    filn: []const u8,
+    key: []const u8,
+    value: []const u8,
+) !void {
     var file = try std.fs.cwd().openFile(filn, .{ .write = true });
     defer file.close();
     try file.seekFromEnd(0);
     try file.writer().print("\n{s} : {s}", .{ key, value });
 }
 
-fn addEmailsToAddressBook(filn: []const u8, map: std.StringHashMap([]const u8), emails: std.StringHashMap([]const u8)) !void {
+fn addEmailsToAddressBook(
+    filn: []const u8,
+    map: std.StringHashMap([]const u8),
+    emails: std.StringHashMap([]const u8),
+) !void {
     var file = try std.fs.cwd().openFile(filn, .{ .write = true });
     defer file.close();
     try file.seekFromEnd(0);
@@ -110,8 +124,14 @@ fn addEmailsToAddressBook(filn: []const u8, map: std.StringHashMap([]const u8), 
             std.debug.print("key exists: `{s}`\n", .{item.key_ptr.*});
             continue;
         }
-        try file.writer().print("\n{s} : {s}", .{ item.key_ptr.*, item.value_ptr.* });
-        std.debug.print("Added {s} -> {s}\n", .{ item.key_ptr.*, item.value_ptr.* });
+        try file.writer().print("\n{s} : {s}", .{
+            item.key_ptr.*,
+            item.value_ptr.*,
+        });
+        std.debug.print("Added {s} -> {s}\n", .{
+            item.key_ptr.*,
+            item.value_ptr.*,
+        });
     }
 }
 
@@ -157,7 +177,11 @@ fn splitEmailSplitResult(email: []const u8) EmailSplitResult {
     return ret;
 }
 
-fn parseAddresses(a: std.mem.Allocator, buf: []u8, map: *std.StringHashMap([]const u8)) !void {
+fn parseAddresses(
+    a: std.mem.Allocator,
+    buf: []u8,
+    map: *std.StringHashMap([]const u8),
+) !void {
     // first, split by comma
     var it = std.mem.split(u8, buf, ",");
     while (it.next()) |addr| {
@@ -273,7 +297,8 @@ pub fn main() anyerror!void {
 
         var filn: []const u8 = undefined;
         var search: []const u8 = undefined;
-        const add_mode: bool = o.add or o.parse or o.@"add-to" or o.@"add-cc" or o.@"add-all";
+        const add_mode: bool =
+            o.add or o.parse or o.@"add-to" or o.@"add-cc" or o.@"add-all";
 
         // no args at all or --help
         if (o.help or (options.positionals.len == 0 and !add_mode)) {
@@ -298,7 +323,9 @@ pub fn main() anyerror!void {
                 help();
                 return;
             }
-            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
+            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {
+                // do nothing
+            } else |err| {
                 const errwriter = std.io.getStdErr().writer();
                 try errwriter.print("Error {s}: {s}\n", .{ err, filn });
                 return;
@@ -330,7 +357,9 @@ pub fn main() anyerror!void {
                 value = key;
             }
 
-            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
+            if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {
+                //
+            } else |err| {
                 const errwriter = std.io.getStdErr().writer();
                 try errwriter.print("Error {s}: {s}\n", .{ err, filn });
                 return;
@@ -360,7 +389,9 @@ pub fn main() anyerror!void {
         // parse input file
         //
 
-        if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {} else |err| {
+        if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {
+            // do nothing
+        } else |err| {
             const errwriter = std.io.getStdErr().writer();
             try errwriter.print("Error {s}: {s}\n", .{ err, filn });
             return;
@@ -380,7 +411,12 @@ pub fn main() anyerror!void {
 
         if (std.mem.indexOf(u8, input, "*")) |index| {
             // search for keys starting with input
-            sort([]const u8, list.items, {}, comptime comp_levenshtein([]const u8));
+            sort(
+                []const u8,
+                list.items,
+                {},
+                comptime comp_levenshtein([]const u8),
+            );
             for (list.items) |key| {
                 if (std.mem.startsWith(u8, key, input[0..index])) {
                     if (map.get(key)) |v| {
