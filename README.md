@@ -34,13 +34,17 @@ Usage:
     -a mykey  value ->  will add "mykey : value" to the inputfile
 
   Add-from e-mail :
-  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
+  cat email | aercbook inputfile --parse [--add-all] [--add-from] [--add-to] \
+                                         [--add-cc]
 
-    Parses the piped-in e-mail. Specify --add-to or --add-cc or
-    both.
+    Parses the piped-in e-mail for e-mail addresses. Specify any
+    combination of --add-from, --add-to, and --add-cc, or use
+    --add-all to add them all.
 
-    --add-to : scan the e-mail for To: emails and add them
-    --add-cc : scan the e-mail for CC: emails and add them
+    --add-from : scan the e-mail for From: addresses and add them
+    --add-to   : scan the e-mail for To: addresses and add them
+    --add-cc   : scan the e-mail for CC: addresses and add them
+    --add-all  : scan the e-mail for all of the above and add them
 
     Note: e-mails like `My Name <my.name@domain.org>` will be
     split into:

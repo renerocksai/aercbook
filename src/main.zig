@@ -51,13 +51,17 @@ fn help() void {
         \\    -a mykey  value ->  will add "mykey : value" to the inputfile
         \\
         \\  Add-from e-mail :
-        \\  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
+        \\  cat email | aercbook inputfile --parse [--add-all] [--add-from] [--add-to] \
+        \\                                         [--add-cc]
         \\
-        \\    Parses the piped-in e-mail. Specify --add-to or --add-cc or
-        \\    both.
+        \\    Parses the piped-in e-mail for e-mail addresses. Specify any
+        \\    combination of --add-from, --add-to, and --add-cc, or use
+        \\    --add-all to add them all.
         \\
-        \\    --add-to : scan the e-mail for To: emails and add them
-        \\    --add-cc : scan the e-mail for CC: emails and add them
+        \\    --add-from : scan the e-mail for From: addresses and add them
+        \\    --add-to   : scan the e-mail for To: addresses and add them
+        \\    --add-cc   : scan the e-mail for CC: addresses and add them
+        \\    --add-all  : scan the e-mail for all of the above and add them
         \\
         \\    Note: e-mails like `My Name <my.name@domain.org>` will be
         \\    split into:
@@ -136,11 +140,13 @@ fn addEmailsToAddressBook(
 }
 
 const ParseMailResult = struct {
+    from: std.StringHashMap([]const u8),
     to: std.StringHashMap([]const u8),
     cc: std.StringHashMap([]const u8),
     const Self = @This();
     fn init(a: std.mem.Allocator) !Self {
         return Self{
+            .from = std.StringHashMap([]const u8).init(a),
             .to = std.StringHashMap([]const u8).init(a),
             .cc = std.StringHashMap([]const u8).init(a),
         };
@@ -221,6 +227,8 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
     var it = std.mem.split(u8, buffer, "\n");
 
     // first collect the headers
+    var from_pos: usize = 0;
+    var from_end: usize = 0;
     var to_pos: usize = 0;
     var to_end: usize = 0;
     var cc_pos: usize = 0;
@@ -233,6 +241,12 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
             break;
         }
 
+        if (std.ascii.eqlIgnoreCase(line[0..5], "from:")) {
+            from_pos = it.index.? - line.len + @intCast(usize, 4);
+            current_end = &from_end;
+            from_end = it.index.? - 2;
+            continue;
+        }
         if (std.ascii.eqlIgnoreCase(line[0..3], "to:")) {
             to_pos = it.index.? - line.len + @intCast(usize, 2);
             current_end = &to_end;
@@ -254,6 +268,10 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
         } else {
             current_end = null;
         }
+    }
+    if (from_pos != 0 and from_end != 0) {
+        // std.debug.print("->from: `{s}`\n", .{buffer[from_pos..from_end]});
+        try parseAddresses(alloc, buffer[from_pos..from_end], &ret.from);
     }
 
     if (to_pos != 0 and to_end != 0) {
@@ -278,8 +296,9 @@ pub fn main() anyerror!void {
 
     if (argsParser.parseForCurrentProcess(struct {
         // This declares long options for double hyphen
-        @"add-cc": bool = false,
+        @"add-from": bool = false,
         @"add-to": bool = false,
+        @"add-cc": bool = false,
         @"add-all": bool = false,
         add: bool = false,
         help: bool = false,
@@ -298,7 +317,8 @@ pub fn main() anyerror!void {
         var filn: []const u8 = undefined;
         var search: []const u8 = undefined;
         const add_mode: bool =
-            o.add or o.parse or o.@"add-to" or o.@"add-cc" or o.@"add-all";
+            o.add or o.parse or o.@"add-from" or o.@"add-to" or
+            o.@"add-cc" or o.@"add-all";
 
         // no args at all or --help
         if (o.help or (options.positionals.len == 0 and !add_mode)) {
@@ -319,7 +339,7 @@ pub fn main() anyerror!void {
         // parse email -> add mode
         //
         if (o.parse) {
-            if (!o.@"add-to" and !o.@"add-cc") {
+            if (!o.@"add-to" and !o.@"add-cc" and !o.@"add-from") {
                 help();
                 return;
             }
@@ -331,6 +351,10 @@ pub fn main() anyerror!void {
                 return;
             }
             const ret = try parseMailFromStdin(alloc);
+
+            if (o.@"add-all" or o.@"add-from") {
+                try addEmailsToAddressBook(filn, map, ret.from);
+            }
             if (o.@"add-all" or o.@"add-to") {
                 try addEmailsToAddressBook(filn, map, ret.to);
             }
