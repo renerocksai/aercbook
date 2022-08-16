@@ -326,6 +326,13 @@ pub fn main() anyerror!void {
             return;
         }
 
+        if (options.positionals.len == 0) {
+            help();
+            return;
+        } else {
+            filn = options.positionals[0];
+        }
+
         const max_file_size = 1024 * 1024;
         var list = std.ArrayList([]const u8).init(alloc);
         defer list.deinit();
@@ -333,16 +340,17 @@ pub fn main() anyerror!void {
         var map = std.StringHashMap([]const u8).init(alloc);
         defer map.deinit();
 
-        filn = options.positionals[0];
-
         //
         // parse email -> add mode
         //
         if (o.parse) {
-            if (!o.@"add-to" and !o.@"add-cc" and !o.@"add-from") {
+            if (!o.@"add-to" and !o.@"add-cc" and !o.@"add-from" and
+                !o.@"add-all")
+            {
                 help();
                 return;
             }
+
             if (readAddressBook(alloc, filn, max_file_size, &list, &map)) {
                 // do nothing
             } else |err| {
@@ -368,7 +376,7 @@ pub fn main() anyerror!void {
         // basic add-mode
         //
         if (o.add) {
-            // we need an addr-book
+            // we need an addr-book and a term to add
             if (options.positionals.len < 2) {
                 help();
                 return;
@@ -401,6 +409,7 @@ pub fn main() anyerror!void {
         // search mode
         //
         if (options.positionals.len < 2) {
+            // we need a search term
             help();
             return;
         }

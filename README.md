@@ -13,7 +13,7 @@ What you get:
 
 ```console
 aercbook --help
- aercbook v0.1.1
+ aercbook v0.1.2
  Search in inputfile's keys for provided search-term.
  Or add to inputfile.
 
@@ -179,13 +179,18 @@ From `aercbook --help`:
 
 ```
   Add-from e-mail :
-  cat email | aercbook inputfile --parse [--add-to] [--add-cc]
 
-    Parses the piped-in e-mail. Specify --add-to or --add-cc or
-    both.
+  cat email | aercbook inputfile --parse [--add-all] [--add-from] [--add-to] \
+                                         [--add-cc]
 
-    --add-to : scan the e-mail for To: emails and add them
-    --add-cc : scan the e-mail for CC: emails and add them
+    Parses the piped-in e-mail for e-mail addresses. Specify any
+    combination of --add-from, --add-to, and --add-cc, or use
+    --add-all to add them all.
+
+    --add-from : scan the e-mail for From: addresses and add them
+    --add-to   : scan the e-mail for To: addresses and add them
+    --add-cc   : scan the e-mail for CC: addresses and add them
+    --add-all  : scan the e-mail for all of the above and add them
 
     Note: e-mails like `My Name <my.name@domain.org>` will be
     split into:
@@ -200,8 +205,8 @@ So you can configure a **binds.conf** entry like this:
 
 # ... existing stuff ...
 
-# on `aa` (add all), add all to- and cc- addresses to the address book
-aa = :pipe -m aercbook /home/rs/.config/aerc/book.txt --parse --add-to --add-cc<Enter>
+# on `aa` (add all), add all from-, to-, and cc- addresses to the address book
+aa = :pipe -m aercbook /home/rs/.config/aerc/book.txt --parse --add-all<Enter>
 ```
 
 If you're not interested in the output of the adding, e.g. which e-mails have
@@ -210,7 +215,7 @@ been added, which ignored (key exists), then you can silence it by adding the
 
 ```
 # on `aa` (add all), add all to- and cc- addresses to the address book
-aa = :pipe -m -b aercbook /home/rs/.config/aerc/book.txt --parse --add-to --add-cc<Enter>
+aa = :pipe -m -b aercbook /home/rs/.config/aerc/book.txt --parse --add-all<Enter>
 ```
 
 # Address Book Format
