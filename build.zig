@@ -5,7 +5,7 @@ pub fn build(b: *std.build.Builder) void {
     // write src/version.zig
     const alloc = std.heap.page_allocator;
     const gvs = gitVersionTag(alloc);
-    const efmt = "WARNING: could not write src/version.zig:\n   {s}\n";
+    const efmt = "WARNING: could not write src/version.zig:\n   {!}\n";
     if (std.fs.cwd().createFile("src/version.zig", .{})) |file| {
         defer file.close();
         const zigfmt = "pub const version_string = \"{s}\";";

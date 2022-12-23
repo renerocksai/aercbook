@@ -108,7 +108,8 @@ fn addToAddressBook(
     key: []const u8,
     value: []const u8,
 ) !void {
-    var file = try std.fs.cwd().openFile(filn, .{ .write = true });
+    // TODO check if write onlu would be OK
+    var file = try std.fs.cwd().openFile(filn, .{ .mode = .read_write });
     defer file.close();
     try file.seekFromEnd(0);
     try file.writer().print("\n{s} : {s}", .{ key, value });
@@ -119,7 +120,7 @@ fn addEmailsToAddressBook(
     map: std.StringHashMap([]const u8),
     emails: std.StringHashMap([]const u8),
 ) !void {
-    var file = try std.fs.cwd().openFile(filn, .{ .write = true });
+    var file = try std.fs.cwd().openFile(filn, .{ .mode = .read_write });
     defer file.close();
     try file.seekFromEnd(0);
     var it = emails.iterator();
@@ -355,7 +356,7 @@ pub fn main() anyerror!void {
                 // do nothing
             } else |err| {
                 const errwriter = std.io.getStdErr().writer();
-                try errwriter.print("Error {s}: {s}\n", .{ err, filn });
+                try errwriter.print("Error {!}: {s}\n", .{ err, filn });
                 return;
             }
             const ret = try parseMailFromStdin(alloc);
@@ -393,7 +394,7 @@ pub fn main() anyerror!void {
                 //
             } else |err| {
                 const errwriter = std.io.getStdErr().writer();
-                try errwriter.print("Error {s}: {s}\n", .{ err, filn });
+                try errwriter.print("Error {!}: {s}\n", .{ err, filn });
                 return;
             }
             // check if key exists
@@ -426,7 +427,7 @@ pub fn main() anyerror!void {
             // do nothing
         } else |err| {
             const errwriter = std.io.getStdErr().writer();
-            try errwriter.print("Error {s}: {s}\n", .{ err, filn });
+            try errwriter.print("Error {!}: {s}\n", .{ err, filn });
             return;
         }
 
@@ -470,7 +471,7 @@ pub fn main() anyerror!void {
             }
         }
     } else |err| {
-        std.debug.print("{s}", .{err});
+        std.debug.print("{!}", .{err});
         help();
     }
 }
