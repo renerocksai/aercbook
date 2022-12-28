@@ -94,7 +94,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
     var result_arena_allocator = result.arena.allocator();
 
     var arglist = std.ArrayList([:0]const u8).init(allocator);
-    defer arglist.deinit();
+    errdefer arglist.deinit();
 
     var last_error: ?anyerror = null;
 
@@ -136,11 +136,11 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
                         const Tag = std.meta.Tag(Verb);
                         inline for (std.meta.fields(Verb)) |verb_info| {
                             if (verb.* == @field(Tag, verb_info.name)) {
-                                if (comptime canHaveFieldsAndIsNotZeroSized(verb_info.type)) {
-                                    inline for (std.meta.fields(verb_info.type)) |fld| {
+                                if (comptime canHaveFieldsAndIsNotZeroSized(verb_info.field_type)) {
+                                    inline for (std.meta.fields(verb_info.field_type)) |fld| {
                                         if (std.mem.eql(u8, pair.name, fld.name)) {
                                             try parseOption(
-                                                verb_info.type,
+                                                verb_info.field_type,
                                                 result_arena_allocator,
                                                 &@field(verb.*, verb_info.name),
                                                 args_iterator,
@@ -205,7 +205,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
                             if (!found) {
                                 const Tag = std.meta.Tag(Verb);
                                 inline for (std.meta.fields(Verb)) |verb_info| {
-                                    const VerbType = verb_info.type;
+                                    const VerbType = verb_info.field_type;
                                     if (comptime canHaveFieldsAndIsNotZeroSized(VerbType)) {
                                         if (verb.* == @field(Tag, verb_info.name)) {
                                             const target_value = &@field(verb.*, verb_info.name);
@@ -260,7 +260,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
                     inline for (std.meta.fields(Verb)) |fld| {
                         if (std.mem.eql(u8, item, fld.name)) {
                             // found active verb, default-initialize it
-                            result.verb = @unionInit(Verb, fld.name, fld.type{});
+                            result.verb = @unionInit(Verb, fld.name, fld.field_type{});
                         }
                     }
 
@@ -288,7 +288,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
         try arglist.append(try result_arena_allocator.dupeZ(u8, item));
     }
 
-    result.positionals = try arglist.toOwnedSlice();
+    result.positionals = arglist.toOwnedSlice();
     return result;
 }
 
