@@ -1,17 +1,17 @@
 const std = @import("std");
 const edit_distance = @import("levenshtein.zig").edit_distance;
-const sort = std.sort.sort;
+const sort = std.sort.heap;
 const version_string = @import("version.zig").version_string;
 const argsParser = @import("args.zig");
 
 var input: []const u8 = undefined;
 
 fn score(input_word: []const u8, compared_to: []const u8) i32 {
-    var dist: i32 = @intCast(i32, edit_distance(input_word, compared_to));
+    var dist: i32 = @intCast(edit_distance(input_word, compared_to));
     if (std.mem.startsWith(u8, compared_to, input_word)) {
         // if the input matches beginning of compared_to, we decrease the
         // distance to rank it higher at the top
-        dist -= @intCast(i32, input_word.len * 2);
+        dist -= @intCast(input_word.len * 2);
     }
     return dist;
 }
@@ -243,19 +243,19 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
         }
 
         if (std.ascii.eqlIgnoreCase(line[0..5], "from:")) {
-            from_pos = it.index.? - line.len + @intCast(usize, 4);
+            from_pos = it.index.? - line.len + 4;
             current_end = &from_end;
             from_end = it.index.? - 2;
             continue;
         }
         if (std.ascii.eqlIgnoreCase(line[0..3], "to:")) {
-            to_pos = it.index.? - line.len + @intCast(usize, 2);
+            to_pos = it.index.? - line.len + 2;
             current_end = &to_end;
             to_end = it.index.? - 2;
             continue;
         }
         if (std.ascii.eqlIgnoreCase(line[0..3], "cc:")) {
-            cc_pos = it.index.? - line.len + @intCast(usize, 2);
+            cc_pos = it.index.? - line.len + 2;
             current_end = &cc_end;
             cc_end = it.index.? - 2;
             continue;
@@ -463,7 +463,7 @@ pub fn main() anyerror!void {
 
         // default: levenshtein search
         sort([]const u8, list.items, {}, comptime comp_levenshtein([]const u8));
-        for (list.items[0..std.math.min(5, list.items.len)]) |key| {
+        for (list.items[0..@min(5, list.items.len)]) |key| {
             if (map.get(key)) |v| {
                 // bug in aerc.conf: tab separated lines are NOT supported
                 // std.debug.print("{s}\t{s}\n", .{ v, key });

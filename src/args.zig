@@ -172,7 +172,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
                 try arglist.append(try result_arena_allocator.dupeZ(u8, item));
             } else {
                 var any_shorthands = false;
-                for (item[1..]) |char, index| {
+                for (item[1..], 0..) |char, index| {
                     var option_name = [2]u8{ '-', char };
                     var found = false;
                     if (@hasDecl(Generic, "shorthands")) {
@@ -288,7 +288,7 @@ fn parseInternal(comptime Generic: type, comptime MaybeVerb: ?type, args_iterato
         try arglist.append(try result_arena_allocator.dupeZ(u8, item));
     }
 
-    result.positionals = arglist.toOwnedSlice();
+    result.positionals = try arglist.toOwnedSlice();
     return result;
 }
 
@@ -416,7 +416,7 @@ fn parseInt(comptime T: type, str: []const u8) !T {
                 if (comptime std.math.maxInt(T) < 1024)
                     return error.Overflow;
                 var base: T = if (base1024) 1024 else 1000;
-                multiplier = try std.math.powi(T, base, @intCast(T, pow));
+                multiplier = try std.math.powi(T, base, @intCast(pow));
             }
         }
     }

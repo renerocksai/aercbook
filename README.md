@@ -261,7 +261,7 @@ suggested as completion.
 # Building it
 
 Make sure you have the latest stable release of zig, [zig
-0.10.0](https://ziglang.org/download/) installed. Then run:
+0.11.0](https://ziglang.org/download/) installed. Then run:
 
 ```console
 zig build
@@ -272,8 +272,8 @@ This will produce `aercbook` in the `./zig-out/bin/` directory. From there,
 
 # Tested with
 
-- zig 0.10.0
+- zig 0.11.0
 - aerc 0.13.0
-- on Linux: 
+- on Linux:
   - NixOS 22.05 ([patched for aerc 0.11.0 instead of 0.10.0](https://sr.ht/~renerocksai/nixpkgs/))
   - Ubuntu 20.04.5 LTS on crostini (ChromeOS x86_64)
