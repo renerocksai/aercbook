@@ -3,6 +3,7 @@ const edit_distance = @import("levenshtein.zig").edit_distance;
 const sort = std.sort.heap;
 const version_string = @import("version.zig").version_string;
 const argsParser = @import("args.zig");
+const emailIterator = @import("email_iterator.zig");
 
 var input: []const u8 = undefined;
 
@@ -108,7 +109,6 @@ fn addToAddressBook(
     key: []const u8,
     value: []const u8,
 ) !void {
-    // TODO check if write onlu would be OK
     var file = try std.fs.cwd().openFile(filn, .{ .mode = .read_write });
     defer file.close();
     try file.seekFromEnd(0);
@@ -190,7 +190,7 @@ fn parseAddresses(
     map: *std.StringHashMap([]const u8),
 ) !void {
     // first, split by comma
-    var it = std.mem.split(u8, buf, ",");
+    var it = emailIterator.init(buf);
     while (it.next()) |addr| {
         // split into parts separated by whitespace
         var t_it = std.mem.tokenize(u8, addr, " \t\n\r");
