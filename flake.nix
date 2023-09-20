@@ -66,30 +66,19 @@
           dontConfigure = true;
           dontInstall = true;
 
-
-          postPatch = ''
-            mkdir -p .cache
-            ln -s ${pkgs.callPackage ./deps.nix { }} .cache/p
-          '';
-
           buildPhase = ''
             mkdir -p $out
             mkdir -p .cache/{p,z,tmp}
             # ReleaseSafe CPU:baseline (runs on all machines) MUSL 
             zig build install --cache-dir $(pwd)/zig-cache --global-cache-dir $(pwd)/.cache -Doptimize=ReleaseSafe -Dcpu=baseline -Dtarget=x86_64-linux-musl --prefix $out
-            cp -pr aercbook-app $out/bin/
-            cp -pr data $out/bin/
-            cp -p passwords.txt $out/bin/
             '';
         };
 
-        # the following produces the exact same image size
-        # note: the following only works if you build on linux I guess
-        # 
         # Usage:
         #    nix build .#docker
         #    docker load < result
-        #    docker run -p5000:5000 aercbook:lastest
+        #    docker run aercbook:lastest
+        # obviously, pass in cmd args and map a volume to the address book...
         packages.docker = pkgs.dockerTools.buildImage { # helper to build Docker image
           name = "aercbook";                              # give docker image a name
           tag = "latest";                               # provide a tag
@@ -98,21 +87,12 @@
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
             paths = [ packages.aercbook.out ];  # .out seems to not make a difference
-            pathsToLink = [ "/bin" "/tmp"];
+            pathsToLink = [ "/bin" ];
           };
 
-          # facil.io needs a /tmp
-          # update: pathsToLink /tmp above seems to do the trick
-
           config = {
-
             Cmd = [ "/bin/aercbook" ];
             WorkingDir = "/bin";
-
-            ExposedPorts = {
-              "5000/tcp" = {};
-            };
-
           };
         };
 

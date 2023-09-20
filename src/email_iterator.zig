@@ -34,3 +34,27 @@ pub fn init(buffer: []const u8) EmailIterator {
         .index = 0,
     };
 }
+
+test "one" {
+    const input =
+        \\ "Schallner, Rene" <rene.schallner@nim.org 
+    ;
+    var it = init(input);
+    const addy = it.next();
+    try std.testing.expectEqualStrings(input, addy orelse "null");
+}
+
+test "two" {
+    const input =
+        \\ "Schallner, Rene" <rene.schallner@nim.org>, "Zig, Usergroup" <usergroup.zig@nim.org>
+    ;
+    var it = init(input);
+    const expected_first = " \"Schallner, Rene\" <rene.schallner@nim.org>";
+    const expected_second = " \"Zig, Usergroup\" <usergroup.zig@nim.org>";
+
+    const first = it.next();
+    const second = it.next();
+
+    try std.testing.expectEqualStrings(expected_first, first orelse "null");
+    try std.testing.expectEqualStrings(expected_second, second orelse "null");
+}

@@ -13,7 +13,7 @@ What you get:
 
 ```console
 aercbook --help
- aercbook v0.1.2
+ aercbook v0.1.3
  Search in inputfile's keys for provided search-term.
  Or add to inputfile.
 
