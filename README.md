@@ -273,7 +273,7 @@ This will produce `aercbook` in the `./zig-out/bin/` directory. From there,
 # Tested with
 
 - zig 0.11.0
-- aerc 0.13.0
+- aerc 0.15.0
 - on Linux:
-  - NixOS 22.05 ([patched for aerc 0.11.0 instead of 0.10.0](https://sr.ht/~renerocksai/nixpkgs/))
+  - NixOS 23.05
   - Ubuntu 20.04.5 LTS on crostini (ChromeOS x86_64)
