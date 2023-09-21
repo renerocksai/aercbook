@@ -109,7 +109,10 @@ fn addToAddressBook(
     key: []const u8,
     value: []const u8,
 ) !void {
-    var file = try std.fs.cwd().openFile(filn, .{ .mode = .read_write });
+    var file = try std.fs.cwd().createFile(filn, .{
+        .read = true,
+        .truncate = false,
+    });
     defer file.close();
     try file.seekFromEnd(0);
     try file.writer().print("\n{s} : {s}", .{ key, value });
@@ -120,7 +123,10 @@ fn addEmailsToAddressBook(
     map: std.StringHashMap([]const u8),
     emails: std.StringHashMap([]const u8),
 ) !void {
-    var file = try std.fs.cwd().openFile(filn, .{ .mode = .read_write });
+    var file = try std.fs.cwd().createFile(filn, .{
+        .read = true,
+        .truncate = false,
+    });
     defer file.close();
     try file.seekFromEnd(0);
     var it = emails.iterator();
@@ -356,8 +362,7 @@ pub fn main() anyerror!void {
                 // do nothing
             } else |err| {
                 const errwriter = std.io.getStdErr().writer();
-                try errwriter.print("Error {!}: {s}\n", .{ err, filn });
-                return;
+                try errwriter.print("Warning {!}: {s} --> creating it...\n", .{ err, filn });
             }
             const ret = try parseMailFromStdin(alloc);
 
@@ -394,8 +399,7 @@ pub fn main() anyerror!void {
                 //
             } else |err| {
                 const errwriter = std.io.getStdErr().writer();
-                try errwriter.print("Error {!}: {s}\n", .{ err, filn });
-                return;
+                try errwriter.print("Warning {!}: {s} --> creating it...\n", .{ err, filn });
             }
             // check if key exists
             if (map.contains(key)) {

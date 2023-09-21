@@ -12,12 +12,12 @@ function build {
     mode="$2"
 
     if [ "$mode" = "" ] ; then
-        mode="release-safe"
+        mode="ReleaseSafe"
     fi
     echo "Building $target..."
     rm -f zig-out/bin/aercbook
     rm -f zig-out/bin/aercbook.exe
-    zig build -Dtarget=$target -D$mode
+    zig build -Dtarget=$target -Doptimize=$mode
     if [ -f zig-out/bin/aercbook ] ; then
         filn=$RELEASE_DIR/aercbook-$(getversion)--$target
         mv zig-out/bin/aercbook $filn

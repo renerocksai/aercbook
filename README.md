@@ -153,6 +153,10 @@ don't start with "ren".
 
 # Adding to the address book
 
+**NOTE:** When adding, aercbook will create the address book file if it doesn't
+exist already. This feature was added so you can just install, configure, and
+use directly from within aerc.
+
 ## From the command line
 
 Aercbook supports adding to the address book from the command line:
