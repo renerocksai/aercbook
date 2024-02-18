@@ -267,7 +267,7 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
             continue;
         }
 
-        if (std.mem.startsWith(u8, line, "\t")) {
+        if (std.mem.startsWith(u8, line, "\t") or std.mem.startsWith(u8, line, " ")) {
             // std.debug.print("continuation\n", .{});
             if (current_end != null) {
                 current_end.?.* = it.index.? - 2;
