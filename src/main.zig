@@ -297,19 +297,19 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
             break;
         }
 
-        if (std.ascii.eqlIgnoreCase(line[0..5], "from:")) {
+        if (std.ascii.startsWithIgnoreCase(line, "from:")) {
             from_pos = it.index.? - line.len + 4;
             current_end = &from_end;
             from_end = it.index.? - 2;
             continue;
         }
-        if (std.ascii.eqlIgnoreCase(line[0..3], "to:")) {
+        if (std.ascii.startsWithIgnoreCase(line, "to:")) {
             to_pos = it.index.? - line.len + 2;
             current_end = &to_end;
             to_end = it.index.? - 2;
             continue;
         }
-        if (std.ascii.eqlIgnoreCase(line[0..3], "cc:")) {
+        if (std.ascii.startsWithIgnoreCase(line, "cc:")) {
             cc_pos = it.index.? - line.len + 2;
             current_end = &cc_end;
             cc_end = it.index.? - 2;
