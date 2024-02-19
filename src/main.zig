@@ -104,6 +104,51 @@ fn readAddressBook(
     }
 }
 
+fn decodeUtf8(str: []const u8, buffer: []u8) []const u8 {
+    const trimmed = std.mem.trim(u8, str, " \t");
+    const utf8_needle = "=?UTF-8?B?";
+    if (std.ascii.indexOfIgnoreCase(trimmed, utf8_needle)) |start| {
+        const end = "?=";
+        if (!std.mem.endsWith(u8, trimmed[start..], end)) return str;
+        const b64 = trimmed[start + utf8_needle.len .. trimmed.len - end.len];
+        // std.debug.print("Decoding: {s}\n", .{b64});
+        const decoder = std.base64.standard.Decoder;
+        const decoded_size = decoder.calcSizeForSlice(b64) catch {
+            // std.debug.print("Padding error!\n", .{});
+            return str;
+        };
+        std.base64.standard.Decoder.decode(buffer, b64) catch return str;
+        return buffer[0..decoded_size];
+    }
+    return str;
+}
+
+fn replaceUtf8(str: []const u8, out_buffer: []u8) []const u8 {
+    var buffer: [512]u8 = undefined;
+    const trimmed = std.mem.trim(u8, str, " \t");
+    const utf8_needle = "=?UTF-8?B?";
+    if (std.ascii.indexOfIgnoreCase(trimmed, utf8_needle)) |start| {
+        const end = "?=";
+        const endpos = std.mem.indexOf(u8, trimmed, end) orelse 0;
+        if (endpos == 0) return str;
+        const b64 = trimmed[start + utf8_needle.len .. endpos];
+        // std.debug.print("Decoding: {s}\n", .{b64});
+        const decoder = std.base64.standard.Decoder;
+        const decoded_size = decoder.calcSizeForSlice(b64) catch {
+            // std.debug.print("Padding error!\n", .{});
+            return str;
+        };
+        std.base64.standard.Decoder.decode(&buffer, b64) catch return str;
+        var repl_buf: [512]u8 = undefined;
+        const what = std.fmt.bufPrint(&repl_buf, "{s}{s}{s}", .{ utf8_needle, b64, end }) catch return str;
+        const with = buffer[0..decoded_size];
+        _ = std.mem.replace(u8, trimmed, what, with, out_buffer);
+        // std.debug.print("In `{s}`, replacing `{s}` with `{s}` -> `{s}`\n", .{ trimmed, what, with, out_buffer });
+        return out_buffer;
+    }
+    return str;
+}
+
 fn addToAddressBook(
     filn: []const u8,
     key: []const u8,
@@ -130,18 +175,22 @@ fn addEmailsToAddressBook(
     defer file.close();
     try file.seekFromEnd(0);
     var it = emails.iterator();
+    var key_buffer: [512]u8 = undefined;
+    var val_buffer: [512]u8 = undefined;
     while (it.next()) |item| {
-        if (map.contains(item.key_ptr.*)) {
-            std.debug.print("key exists: `{s}`\n", .{item.key_ptr.*});
+        const decoded_key = decodeUtf8(item.key_ptr.*, &key_buffer);
+        if (map.contains(decoded_key)) {
+            std.debug.print("key exists: `{s}`\n", .{decoded_key});
             continue;
         }
+        const decoded_val = replaceUtf8(item.value_ptr.*, &val_buffer);
         try file.writer().print("\n{s} : {s}", .{
-            item.key_ptr.*,
-            item.value_ptr.*,
+            decoded_key,
+            decoded_val,
         });
         std.debug.print("Added {s} -> {s}\n", .{
-            item.key_ptr.*,
-            item.value_ptr.*,
+            decoded_key,
+            decoded_val,
         });
     }
 }
@@ -401,12 +450,17 @@ pub fn main() anyerror!void {
                 const errwriter = std.io.getStdErr().writer();
                 try errwriter.print("Warning {!}: {s} --> creating it...\n", .{ err, filn });
             }
+
+            var key_buffer: [512]u8 = undefined;
+            var val_buffer: [512]u8 = undefined;
+            const decoded_key = decodeUtf8(key, &key_buffer);
             // check if key exists
-            if (map.contains(key)) {
-                std.debug.print("key exists: `{s}`\n", .{key});
+            if (map.contains(decoded_key)) {
+                std.debug.print("key exists: `{s}`\n", .{decoded_key});
                 return;
             }
-            try addToAddressBook(filn, key, value);
+            const decoded_val = replaceUtf8(value, &val_buffer);
+            try addToAddressBook(filn, decoded_key, decoded_val);
             return;
         }
 
