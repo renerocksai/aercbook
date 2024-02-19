@@ -293,7 +293,7 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
 
     while (it.next()) |line| {
         // end of header section will be a single \r
-        if (line.len == 1) {
+        if (line.len <= 1) {
             break;
         }
 
