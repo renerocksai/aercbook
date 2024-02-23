@@ -300,18 +300,21 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
             from_pos = it.index.? - line.len + 4;
             current_end = &from_end;
             from_end = it.index.? - 2;
+            if (buffer[from_end] != '\r') from_end += 1;
             continue;
         }
         if (std.ascii.startsWithIgnoreCase(line, "to:")) {
             to_pos = it.index.? - line.len + 2;
             current_end = &to_end;
             to_end = it.index.? - 2;
+            if (buffer[to_end] != '\r') to_end += 1;
             continue;
         }
         if (std.ascii.startsWithIgnoreCase(line, "cc:")) {
             cc_pos = it.index.? - line.len + 2;
             current_end = &cc_end;
             cc_end = it.index.? - 2;
+            if (buffer[cc_end] != '\r') cc_end += 1;
             continue;
         }
 
@@ -319,6 +322,7 @@ fn parseMailFromStdin(alloc: std.mem.Allocator) !ParseMailResult {
             // std.debug.print("continuation\n", .{});
             if (current_end != null) {
                 current_end.?.* = it.index.? - 2;
+                if (buffer[current_end.?.*] != '\r') current_end.?.* += 1;
             }
         } else {
             current_end = null;
