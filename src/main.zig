@@ -141,9 +141,10 @@ fn replaceUtf8(str: []const u8, out_buffer: []u8) []const u8 {
         std.base64.standard.Decoder.decode(&buffer, b64) catch return str;
         const what = trimmed[start .. endpos + 2];
         const with = buffer[0..decoded_size];
+        const replacement_size = std.mem.replacementSize(u8, trimmed, what, with);
         _ = std.mem.replace(u8, trimmed, what, with, out_buffer);
         // std.debug.print("In `{s}`, replacing `{s}` with `{s}` -> `{s}`\n", .{ trimmed, what, with, out_buffer });
-        return out_buffer;
+        return out_buffer[0..replacement_size];
     }
     return str;
 }
