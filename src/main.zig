@@ -232,7 +232,7 @@ fn splitEmailSplitResult(email: []const u8) EmailSplitResult {
     // before the <, so only split if pos of < is > 1, like in
     // `x <x@y.com`
     if (ltindex > 1) {
-        ret.name = std.mem.trim(u8, email[0 .. ltindex - 1], " ");
+        ret.name = std.mem.trim(u8, email[0..ltindex], " ");
         ret.email = email[ltindex..email.len];
     }
     return ret;
